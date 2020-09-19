@@ -1,43 +1,39 @@
-import warnings
 from abc import ABC
 from typing import Callable, List, Tuple, Any
 
 from rply import ParserGenerator
 from rply.parser import LRParser
 
-ATTRIBUTE_PRODUCTION = '_structured_parser_production'
-ATTRIBUTE_ERROR = '_structured_parser_error'
+_ATTRIBUTE_PRODUCTION = '_structured_parser_production'
+_ATTRIBUTE_ERROR = '_structured_parser_error'
+
+END_TOKEN = '$end'
 
 
-class StructuredParserBase(ABC):
+class _StructuredParserBase(ABC):
     parser: LRParser
 
 
-def append_to_attribute_list(items: List[Tuple[Callable, Tuple]], attribute, method):
-    if hasattr(method, attribute):
-        items.append(getattr(method, attribute))
-
-
 class _ConsumeParser:
-    _structuredParser: StructuredParserBase
+    _structuredParser: _StructuredParserBase
     _pg: ParserGenerator
 
-    def __init__(self, parser: StructuredParserBase, tokens: List[str]):
+    def __init__(self, parser: _StructuredParserBase, tokens: List[str]):
         self._structuredParser = parser
         self._pg = ParserGenerator(tokens)
         self._build_parser()
 
     @staticmethod
     def _is_production(method: Callable):
-        return hasattr(method, ATTRIBUTE_PRODUCTION)
+        return hasattr(method, _ATTRIBUTE_PRODUCTION)
 
     @staticmethod
     def _is_error(method: Callable):
-        return hasattr(method, ATTRIBUTE_ERROR)
+        return hasattr(method, _ATTRIBUTE_ERROR)
 
     @staticmethod
     def _unwrap_production(method: Callable) -> Tuple[str, Any]:
-        args = getattr(method, ATTRIBUTE_PRODUCTION)
+        args = getattr(method, _ATTRIBUTE_PRODUCTION)
         if len(args) == 1:
             return args[0], None
         return args
@@ -78,10 +74,15 @@ def _parser_marked_decorator(attribute: str):
     return decorator
 
 
-production = _parser_marked_decorator(ATTRIBUTE_PRODUCTION)
-error = _parser_marked_decorator(ATTRIBUTE_ERROR)
+production = _parser_marked_decorator(_ATTRIBUTE_PRODUCTION)
+error = _parser_marked_decorator(_ATTRIBUTE_ERROR)
 
 
-class StructuredParser(StructuredParserBase):
+class StructuredParser(_StructuredParserBase):
     def __init__(self):
-        pass
+        super()
+
+    def parse(self, text: str) -> Any:
+        # state is tracked by this class by default, no need to pass state.
+        # ...passing state would actually not work if you expect it to replace self
+        return self.parser.parse(text)
