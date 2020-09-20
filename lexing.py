@@ -13,8 +13,8 @@ LexerUnnamedRules = List[LexerRule]
 class Tokenizer:
     _lexer: Lexer
 
-    def __init__(self, token_rules: LexerNamedRules, ignore_rules: LexerUnnamedRules):
-        _lexer = self._build_rply_lexer(token_rules, ignore_rules)
+    def __init__(self, token_rules: LexerNamedRules = None, ignore_rules: LexerUnnamedRules = None):
+        self._lexer = self._build_rply_lexer(token_rules or {}, ignore_rules or [])
 
     @staticmethod
     def _get_rule_params(token_rule: LexerRule) -> List[Union[str, RegexFlag]]:
