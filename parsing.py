@@ -3,11 +3,14 @@ from typing import Callable, List, Any, Iterable, Dict, Optional, Union, TypeVar
 from rply import ParserGenerator, Token
 from rply.parser import LRParser
 
+from exceptions import ParsingTokensExhaustedException
+
 TState = TypeVar('TState')
 EmptyProduction = None
 Productions = Dict[str, Union[Callable[[List[Token], Optional[TState]], Any], EmptyProduction]]
 ProductionPrecedences = Dict[str, Any]
 ErrorHandler = Callable[[Token], None]
+END_TOKEN_NAME = '$end'
 
 
 def _reverse_args_decorator(method):
@@ -17,9 +20,9 @@ def _reverse_args_decorator(method):
 class Parser:
     _parser = LRParser
     _productions: Productions
-    _error_handler: ErrorHandler
+    _user_error_handler: ErrorHandler
 
-    def __init__(self, tokens: List[str], productions: Productions, error_handler: ErrorHandler = None,
+    def __init__(self, tokens: Iterable[str], productions: Productions, error_handler: ErrorHandler = None,
                  precedences: Optional[ProductionPrecedences] = None):
         if len(productions) < 1:
             raise ValueError('Productions must not be empty')
@@ -30,7 +33,12 @@ class Parser:
     def _get_precedence(rule: str, precedences: Optional[ProductionPrecedences]):
         return None if precedences is None else precedences[rule]
 
-    def _build_parser(self, tokens: List[str], productions: Productions, error_handler: Optional[ErrorHandler],
+    def _error_handler(self, token: Token):
+        if token.name == END_TOKEN_NAME:
+            raise ParsingTokensExhaustedException()
+        self._user_error_handler(token)
+
+    def _build_parser(self, tokens: Iterable[str], productions: Productions, error_handler: Optional[ErrorHandler],
                       precedences: Optional[ProductionPrecedences]):
         pg = ParserGenerator(tokens)
 
