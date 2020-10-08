@@ -40,7 +40,7 @@ class Lexer:
 
     def build(self) -> 'Lexer':
         """
-        This is so that Dr. Rupp can call "build" and it mimics the LexerGenerator interface (build, then lex on Lexer)
+        This method exists so that Lexer can match the general interface of both LexerGenerator and Lexer from rply
         :return: self
         """
         return self

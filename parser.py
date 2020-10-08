@@ -57,7 +57,7 @@ class Parser:
 
     def build(self) -> 'Parser':
         """
-        Exists to match the interface of parser generator
+        This method allows Parser to match the general interface of ParserGenerator and LRParser from rply
         :return: self
         """
         return self
