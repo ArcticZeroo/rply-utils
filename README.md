@@ -83,4 +83,6 @@ The parser works exactly the same as it does in rply, with a few added features:
 
 This isn't an officially supported package, it's pretty much just a project for making my compilers class easier.
 
-As a result, you'll need to drop this package into wherever you want to use it. `__init__.py` also needs to be populated
+As a result, you'll need to download and drop this package into wherever you want to use it. You may also need to
+replace `import rply` with `import mypackage.rply` if for some reason your professor decides that everyone is going
+to use a local version of rply instead of the python package.
