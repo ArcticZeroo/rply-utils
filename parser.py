@@ -2,15 +2,17 @@ from typing import Union, List, Tuple, Callable, Optional, Iterable
 
 from rply import Token, ParserGenerator
 
-from .exceptions import ParsingTokensExhaustedException, ParsingException, IllegalArgumentException, LexingException
+from .exceptions import ParsingTokensExhaustedException, ParsingException, IllegalArgumentException, LexingException, \
+    ParsingTokenUndefinedException
 from .lexer import Lexer
-from .util import is_lexing_error
+from .util import is_lexing_error, get_exception_message
 
 LeftOrRight = Union['left', 'right']
 ParserPrecedence = List[Tuple[LeftOrRight, List[str]]]
 ErrorHandler = Callable[[Token], None]
 END_TOKEN_NAME = '$end'
 PRODUCTION_NAME_SEPARATOR = ' : '
+LEXER_EXCEPTION_BASE_MESSAGE = 'Unexpected token encountered in lexer'
 
 
 def _noop(*_, **__):
@@ -62,10 +64,21 @@ class Parser:
         """
         return self
 
-    def parse(self, tokens: Iterable[Token]):
+    def parse(self, tokens: Iterable[Token], code: Optional[str] = None):
         try:
-            return self._pg.build().parse(tokens)
+            parser = self._pg.build()
+        except KeyError as e:
+            raise ParsingTokenUndefinedException(get_exception_message(e))
+
+        try:
+            return parser.parse(tokens)
         except Exception as e:
             if is_lexing_error(e):
-                raise LexingException(f'Unexpected token encountered in lexer: {str(e)}') from e
+                if isinstance(e.args, tuple):
+                    _, source_pos = e.args
+                    message = f'{LEXER_EXCEPTION_BASE_MESSAGE} at position {source_pos.idx}'
+                    if code is not None:
+                        raise LexingException(f'{message} (char: {code[source_pos.idx]})') from e
+                    raise LexingException(message) from e
+                raise LexingException(f'Unexpected exception occurred during lexing: {str(e)}') from e
             raise e
